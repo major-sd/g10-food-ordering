@@ -35,7 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/restaurants/health").permitAll()
-                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
+                        .permitAll()
                         // Public read operations - browsing restaurants
                         .requestMatchers(HttpMethod.GET, "/api/restaurants/**").permitAll()
                         // Protected write operations - allow authenticated users for now
