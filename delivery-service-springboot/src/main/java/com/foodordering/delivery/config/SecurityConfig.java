@@ -1,4 +1,4 @@
-package com.foodordering.payment.config;
+package com.foodordering.delivery.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +12,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.foodordering.payment.security.JwtAuthenticationFilter;
+import com.foodordering.delivery.security.JwtAuthenticationFilter;
 
 import java.util.Arrays;
 
@@ -25,17 +25,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(authz -> authz
                         // Public endpoints
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/health").permitAll()
-                        .requestMatchers("/api/payments/health").permitAll()
-                        .requestMatchers("/api/payments/methods").permitAll()
+                        .requestMatchers("/api/delivery/health").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        // Protected endpoints - all payment operations require authentication
+                        // Protected endpoints - require authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

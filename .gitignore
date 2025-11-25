@@ -267,3 +267,6 @@ delivery-service-springboot/target/
 **/target/**
 */target/*
 target/**/*
+
+.idea
+test-report-*.txt

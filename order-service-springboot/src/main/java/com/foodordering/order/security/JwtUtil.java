@@ -1,7 +1,8 @@
 package com.foodordering.order.security;
 
-import java.security.Key;
 import java.util.Date;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,65 +20,65 @@ import io.jsonwebtoken.security.Keys;
 // Keep @Component for now to ensure proper injection of @Value properties
 @Component
 public class JwtUtil {
-    
+
     @Value("${jwt.secret}")
     private String jwtSecret;
-    
+
     @Value("${jwt.expiration}")
     private int jwtExpirationMs;
-    
-    private Key getSigningKey() {
+
+    private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
-    
+
     /**
      * Get user ID from JWT token
      */
     public String getUserIdFromToken(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-        
+                .parseSignedClaims(token)
+                .getPayload();
+
         return claims.getSubject();
     }
-    
+
     /**
      * Get email from JWT token
      */
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-        
+                .parseSignedClaims(token)
+                .getPayload();
+
         return claims.get("email", String.class);
     }
-    
+
     /**
      * Get role from JWT token
      */
     public String getRoleFromToken(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-        
+                .parseSignedClaims(token)
+                .getPayload();
+
         return claims.get("role", String.class);
     }
-    
+
     /**
      * Validate JWT token
      */
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token);
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
             System.out.println("JWT token validation successful");
             return true;
         } catch (MalformedJwtException e) {
@@ -95,17 +96,17 @@ public class JwtUtil {
         }
         return false;
     }
-    
+
     /**
      * Check if JWT token is expired
      */
     public boolean isTokenExpired(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-        
+                .parseSignedClaims(token)
+                .getPayload();
+
         return claims.getExpiration().before(new Date());
     }
 }

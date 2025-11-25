@@ -14,6 +14,11 @@ spring:
     username: guest
     password: guest
 
+# JWT Configuration (must match User Service for token compatibility)
+jwt:
+  secret: "dGhpc2lzYXZlcnlzZWN1cmVzZWNyZXRrZXlmb3Jqd3R0b2tlbnNpbmZvb2RvcmRlcmluZ2FwcA=="
+  expiration: 86400000
+
 # Management endpoints for monitoring and health checks
 management:
   endpoints:

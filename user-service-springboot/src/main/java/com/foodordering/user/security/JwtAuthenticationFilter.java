@@ -22,17 +22,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                  FilterChain filterChain) throws ServletException, IOException {
+            FilterChain filterChain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
 
         String userId = null;
         String jwt = null;
+        String role = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
                 userId = jwtUtil.getUserIdFromToken(jwt);
+                role = jwtUtil.getRoleFromToken(jwt);
             } catch (Exception e) {
                 // Invalid token, continue without authentication
                 logger.warn("Invalid JWT token: " + e.getMessage());
@@ -40,9 +42,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Create a simple authentication token for the user
-            UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(userId, null, null);
+            // Create authorities based on role
+            java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+
+            if (role != null) {
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role));
+            }
+
+            // Create authentication token with authorities
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userId, null,
+                    authorities);
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }

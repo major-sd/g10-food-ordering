@@ -28,21 +28,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/users/register").permitAll()
-                .requestMatchers("/api/users/login").permitAll()
-                .requestMatchers("/api/users/logout").permitAll()
-                .requestMatchers("/api/users/health").permitAll()
-                .requestMatchers("/api/users/test/**").permitAll()
-                .requestMatchers("/api/users/profile/test").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/users/login").permitAll()
+                        .requestMatchers("/api/users/logout").permitAll()
+                        .requestMatchers("/health").permitAll()
+                        .requestMatchers("/api/users/health").permitAll()
+                        .requestMatchers("/api/users/test/**").permitAll()
+                        .requestMatchers("/api/users/profile/test").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/users/*/role").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

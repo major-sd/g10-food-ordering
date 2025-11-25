@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -152,6 +153,34 @@ public class UserController {
     }
 
     /**
+     * Update user role endpoint (Admin only)
+     */
+    @PutMapping("/{userId}/role")
+    @Operation(summary = "Update user role", description = "Update a user's role (Admin only)")
+    public ResponseEntity<?> updateUserRole(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable String userId,
+            @RequestBody Map<String, String> roleMap) {
+
+        String newRole = roleMap.get("role");
+        if (newRole == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Role is required"));
+        }
+
+        // Note: Role authorization should be handled by SecurityConfig
+        // But we can also double check here if needed
+
+        boolean updated = userService.updateUserRole(userId, newRole);
+
+        if (updated) {
+            return ResponseEntity.ok(Map.of("message", "User role updated successfully"));
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Failed to update role. User not found or invalid role."));
+        }
+    }
+
+    /**
      * Simple test endpoint for Bruno testing
      */
     @PostMapping("/test/simple-register")
@@ -161,8 +190,7 @@ public class UserController {
                 "success", true,
                 "message", "Registration endpoint working",
                 "data", registrationDto,
-                "timestamp", java.time.LocalDateTime.now()
-        ));
+                "timestamp", java.time.LocalDateTime.now()));
     }
 
     /**
@@ -174,8 +202,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of(
                 "status", "OK",
                 "service", "user-service",
-                "timestamp", java.time.LocalDateTime.now()
-        ));
+                "timestamp", java.time.LocalDateTime.now()));
     }
 
     /**
@@ -188,8 +215,7 @@ public class UserController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Successfully logged out",
-                    "timestamp", java.time.LocalDateTime.now()
-            ));
+                    "timestamp", java.time.LocalDateTime.now()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Logout failed: " + e.getMessage()));

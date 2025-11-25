@@ -1,4 +1,4 @@
-package com.foodordering.user.security;
+package com.foodordering.payment.security;
 
 import java.util.Date;
 
@@ -15,7 +15,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 
 /**
- * JWT utility class for token generation and validation
+ * JWT utility class for token validation in Payment Service
  */
 @Component
 public class JwtUtil {
@@ -28,22 +28,6 @@ public class JwtUtil {
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
-    }
-
-    /**
-     * Generate JWT token for user
-     */
-    public String generateToken(String userId, String email, String role) {
-        Date expiryDate = new Date(System.currentTimeMillis() + jwtExpirationMs);
-
-        return Jwts.builder()
-                .subject(userId)
-                .claim("email", email)
-                .claim("role", role)
-                .issuedAt(new Date())
-                .expiration(expiryDate)
-                .signWith(getSigningKey())
-                .compact();
     }
 
     /**
@@ -103,28 +87,24 @@ public class JwtUtil {
             System.err.println("JWT token is unsupported: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.err.println("JWT claims string is empty: " + e.getMessage());
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            System.err.println("JWT signature validation failed: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("JWT token validation error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
         return false;
-    }
-
-    /**
-     * Get expiration date from JWT token
-     */
-    public Date getExpirationDateFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.getExpiration();
     }
 
     /**
      * Check if JWT token is expired
      */
     public boolean isTokenExpired(String token) {
-        Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getExpiration().before(new Date());
     }
 }
