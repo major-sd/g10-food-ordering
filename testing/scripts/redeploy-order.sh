@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "=== Redeploying Order Service ==="
-cd /Users/I529021/g10-food-ordering/order-service-springboot
+cd /Users/I528949/Scalable-services/order-service-springboot
 mvn clean package -DskipTests
 docker build -t food-ordering/order-service:latest .
 docker stop food-ordering-order-service-springboot 2>/dev/null || true
