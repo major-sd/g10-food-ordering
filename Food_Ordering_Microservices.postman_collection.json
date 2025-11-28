@@ -24,6 +24,30 @@
 				},
 				{
 					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.token) {",
+									"            pm.environment.set(\"user_token\", jsonData.token);",
+									"            pm.collectionVariables.set(\"user_token\", jsonData.token);",
+									"            console.log(\"User token saved to environment\");",
+									"        }",
+									"    } catch (e) {",
+									"        console.log(\"Error extracting token:\", e);",
+									"    }",
+									"} else {",
+									"    console.log(\"Registration failed with status:\", pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -46,6 +70,30 @@
 				},
 				{
 					"name": "Register Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.token) {",
+									"            pm.environment.set(\"admin_token\", jsonData.token);",
+									"            pm.collectionVariables.set(\"admin_token\", jsonData.token);",
+									"            console.log(\"Admin token saved to environment\");",
+									"        }",
+									"    } catch (e) {",
+									"        console.log(\"Error extracting token:\", e);",
+									"    }",
+									"} else {",
+									"    console.log(\"Registration failed with status:\", pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -74,8 +122,20 @@
 							"script": {
 								"exec": [
 									"if (pm.response.code === 200) {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"user_token\", jsonData.token);",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.token) {",
+									"            pm.environment.set(\"user_token\", jsonData.token);",
+									"            pm.collectionVariables.set(\"user_token\", jsonData.token);",
+									"            console.log(\"User token saved successfully\");",
+									"        } else {",
+									"            console.log(\"No token found in response\");",
+									"        }",
+									"    } catch (e) {",
+									"        console.log(\"Error extracting token:\", e);",
+									"    }",
+									"} else {",
+									"    console.log(\"Login failed with status:\", pm.response.code);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -110,8 +170,20 @@
 							"script": {
 								"exec": [
 									"if (pm.response.code === 200) {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"admin_token\", jsonData.token);",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.token) {",
+									"            pm.environment.set(\"admin_token\", jsonData.token);",
+									"            pm.collectionVariables.set(\"admin_token\", jsonData.token);",
+									"            console.log(\"Admin token saved successfully\");",
+									"        } else {",
+									"            console.log(\"No token found in response\");",
+									"        }",
+									"    } catch (e) {",
+									"        console.log(\"Error extracting token:\", e);",
+									"    }",
+									"} else {",
+									"    console.log(\"Login failed with status:\", pm.response.code);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -403,17 +475,20 @@
 		{
 			"key": "base_url",
 			"value": "http://localhost:8080",
-			"type": "string"
+			"type": "string",
+			"description": "Base URL for API Gateway"
 		},
 		{
 			"key": "user_token",
 			"value": "",
-			"type": "string"
+			"type": "string",
+			"description": "JWT token for USER role - Auto-set after login/register"
 		},
 		{
 			"key": "admin_token",
 			"value": "",
-			"type": "string"
+			"type": "string",
+			"description": "JWT token for ADMIN role - Auto-set after login/register"
 		}
 	]
 }

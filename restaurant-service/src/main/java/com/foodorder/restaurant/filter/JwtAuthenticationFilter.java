@@ -44,6 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("Authenticated user " + userId + " with role " + role + " for " + request.getMethod() + " " + request.getRequestURI());
             } catch (Exception e) {
                 logger.error("Error parsing JWT token", e);
             }

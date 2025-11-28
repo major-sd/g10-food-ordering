@@ -8,7 +8,10 @@ import com.foodorder.auth.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +19,7 @@ import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -27,9 +31,9 @@ public class AuthService {
         this.userRepository = userRepository;
     }
 
-    public AuthResponse register(RegisterRequest request) {
+    public Optional<AuthResponse> register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("User already exists");
+            return Optional.empty();
         }
 
         User user = new User();
@@ -41,15 +45,15 @@ public class AuthService {
         userRepository.save(user);
 
         String token = generateToken(user.getId(), user.getRole(), user.getEmail());
-        return new AuthResponse(token);
+        return Optional.of(new AuthResponse(token));
     }
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         if (!verifyPassword(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         String token = generateToken(user.getId(), user.getRole(), user.getEmail());

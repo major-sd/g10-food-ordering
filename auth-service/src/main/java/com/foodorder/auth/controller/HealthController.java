@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/health")
+@RequestMapping
 public class HealthController {
 
-    @GetMapping
+    @GetMapping({"/health", "/auth/health"})
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");

@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "workspace": {
+    "name": "Food Ordering Microservices",
+    "description": "Bruno workspace including collection and environment for the Food Ordering system",
+    "collections": [
+      {
+        "name": "Food Ordering Microservices",
+        "root": "./Food_Ordering_Microservices.bru"
+      }
+    ],
+    "environments": [
+      {
+        "name": "Food Ordering Local",
+        "root": "./Food_Ordering_Bruno_Environment.bru"
+      }
+    ]
+  }
+}
