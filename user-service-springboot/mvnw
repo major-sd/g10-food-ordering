@@ -1,7 +1,0 @@
-#!/bin/sh
-# Maven Wrapper Script
-
-MAVEN_OPTS="${MAVEN_OPTS:-}"
-MAVEN_PROJECTBASEDIR="${MAVEN_PROJECTBASEDIR:-$(dirname "$0")}"
-
-exec mvn "$@"

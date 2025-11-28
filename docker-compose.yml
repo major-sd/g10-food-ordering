@@ -1,0 +1,243 @@
+services:
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL Databases
+  mysql_auth:
+    image: mysql:8.0
+    container_name: mysql_auth
+    ports:
+      - "33061:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: auth_db
+    volumes:
+      - mysql_auth_data:/var/lib/mysql
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql_restaurant:
+    image: mysql:8.0
+    container_name: mysql_restaurant
+    ports:
+      - "33062:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: restaurant_db
+    volumes:
+      - mysql_restaurant_data:/var/lib/mysql
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql_order:
+    image: mysql:8.0
+    container_name: mysql_order
+    ports:
+      - "33063:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: order_db
+    volumes:
+      - mysql_order_data:/var/lib/mysql
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql_payment:
+    image: mysql:8.0
+    container_name: mysql_payment
+    ports:
+      - "33064:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: payment_db
+    volumes:
+      - mysql_payment_data:/var/lib/mysql
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql_notification:
+    image: mysql:8.0
+    container_name: mysql_notification
+    ports:
+      - "33065:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: notification_db
+    volumes:
+      - mysql_notification_data:/var/lib/mysql
+    networks:
+      - food-order-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservices
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql_auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - food-order-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_auth:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+
+  restaurant-service:
+    build:
+      context: ./restaurant-service
+      dockerfile: Dockerfile
+    container_name: restaurant-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql_restaurant:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - food-order-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_restaurant:3306/restaurant_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql_order:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      restaurant-service:
+        condition: service_started
+    networks:
+      - food-order-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_order:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql_payment:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - food-order-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_payment:3306/payment_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql_notification:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - food-order-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_notification:3306/notification_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: password
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - restaurant-service
+      - order-service
+    networks:
+      - food-order-network
+
+networks:
+  food-order-network:
+    driver: bridge
+
+volumes:
+  mysql_auth_data:
+  mysql_restaurant_data:
+  mysql_order_data:
+  mysql_payment_data:
+  mysql_notification_data:
+
