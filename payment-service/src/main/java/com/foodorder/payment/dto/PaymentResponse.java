@@ -7,11 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResultEvent {
-    public Long orderId;
-    public Long userId;
-    public boolean success;
-    public String transactionId;
-    public String reason;
+public class PaymentResponse {
+    private Long orderId;
+    private Boolean success;
+    private String transactionId;
+    private String message;
 }
-

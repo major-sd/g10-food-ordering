@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
-    public static final String PAYMENT_RESULT_QUEUE = "payment-result-queue";
+    public static final String PAYMENT_RESULT_QUEUE = "notification-payment-result-queue";
     public static final String PAYMENTS_EXCHANGE = "payments-exchange";
     public static final String PAYMENT_RESULT_ROUTING_KEY = "payment.result";
 

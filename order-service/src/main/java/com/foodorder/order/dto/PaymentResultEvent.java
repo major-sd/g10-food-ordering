@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentResultEvent {
     public Long orderId;
+    public Long userId;
     public boolean success;
     public String transactionId;
     public String reason;

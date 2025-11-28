@@ -13,9 +13,8 @@ public class NotificationListener {
         this.notificationService = notificationService;
     }
 
-    @RabbitListener(queues = "payment-result-queue")
+    @RabbitListener(queues = "notification-payment-result-queue")
     public void handlePaymentResult(PaymentResultEvent event) {
         notificationService.handlePaymentResult(event);
     }
 }
-

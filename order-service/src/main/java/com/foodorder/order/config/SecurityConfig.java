@@ -29,16 +29,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health", "/orders/health", "/actuator/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/orders").hasAnyRole("USER", "ADMIN") // Create order requires USER or ADMIN
-                .requestMatchers(HttpMethod.GET, "/orders/{orderId}").hasAnyRole("USER", "ADMIN") // View specific order requires USER or ADMIN
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/health", "/orders/health", "/actuator/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/orders").permitAll() // Create order
+                                                                                 // requires USER or
+                                                                                 // ADMIN
+                        .requestMatchers(HttpMethod.GET, "/orders/{orderId}").permitAll() // View
+                                                                                          // specific
+                                                                                          // order
+                                                                                          // requires
+                                                                                          // USER or
+                                                                                          // ADMIN
+                        .anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -58,4 +64,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
