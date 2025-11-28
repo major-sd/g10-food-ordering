@@ -79,10 +79,21 @@ public class NotificationService {
 
             // Send appropriate email
             if ("ORDER_CONFIRMED".equals(notificationType)) {
-                emailService.sendOrderConfirmationEmail(
-                        user.getEmail(),
-                        event.getOrderId(),
-                        event.getTransactionId());
+                // Fetch full order details
+                com.foodorder.notification.dto.OrderDTO order = webClient.get()
+                        .uri("http://order-service:8083/orders/" + event.getOrderId())
+                        .retrieve()
+                        .bodyToMono(com.foodorder.notification.dto.OrderDTO.class)
+                        .block();
+
+                if (order != null) {
+                    emailService.sendOrderConfirmationEmail(
+                            user.getEmail(),
+                            order,
+                            event.getTransactionId());
+                } else {
+                    logger.warn("⚠️  Order {} details not found, skipping confirmation email", event.getOrderId());
+                }
             } else {
                 emailService.sendOrderCancellationEmail(
                         user.getEmail(),

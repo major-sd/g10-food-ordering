@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 public class PaymentService {
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
-    
+
     private final PaymentRepository paymentRepository;
     private final RabbitTemplate rabbitTemplate;
 
@@ -31,7 +31,7 @@ public class PaymentService {
     @Transactional
     public void processPayment(OrderCreatedEvent event) {
         logger.info("Processing payment for order: {}", event.getOrderId());
-        
+
         try {
             // Simulate payment processing (90% success rate)
             boolean success = simulatePaymentGateway();
@@ -40,35 +40,32 @@ public class PaymentService {
 
             // Save payment record
             PaymentRecord paymentRecord = createPaymentRecord(
-                event.getOrderId(), 
-                success, 
-                transactionId, 
-                "CARD"
-            );
+                    event.getOrderId(),
+                    success,
+                    transactionId,
+                    "CARD");
 
             // Publish PaymentResultEvent to update order and notify user
             publishPaymentResult(
-                event.getOrderId(), 
-                event.getUserId(),
-                success, 
-                transactionId, 
-                reason
-            );
-            
-            logger.info("Payment processed for order {}: success={}, txnId={}", 
-                event.getOrderId(), success, transactionId);
-                
+                    event.getOrderId(),
+                    event.getUserId(),
+                    success,
+                    transactionId,
+                    reason);
+
+            logger.info("Payment processed for order {}: success={}, txnId={}",
+                    event.getOrderId(), success, transactionId);
+
         } catch (Exception e) {
             logger.error("Error processing payment for order {}: {}", event.getOrderId(), e.getMessage(), e);
-            
+
             // Publish failure event to trigger compensation
             publishPaymentResult(
-                event.getOrderId(), 
-                event.getUserId(),
-                false, 
-                null, 
-                "Payment processing error: " + e.getMessage()
-            );
+                    event.getOrderId(),
+                    event.getUserId(),
+                    false,
+                    null,
+                    "Payment processing error: " + e.getMessage());
         }
     }
 
@@ -78,18 +75,17 @@ public class PaymentService {
     @Transactional
     public PaymentResponse processPaymentManually(PaymentRequest request) {
         logger.info("Manual payment processing for order: {}", request.getOrderId());
-        
+
         try {
             // Check if payment already exists for this order
             Optional<PaymentRecord> existingPayment = paymentRepository.findByOrderId(request.getOrderId());
             if (existingPayment.isPresent()) {
                 PaymentRecord existing = existingPayment.get();
                 return new PaymentResponse(
-                    existing.getOrderId(),
-                    existing.getSuccess(),
-                    existing.getTransactionId(),
-                    "Payment already processed for this order"
-                );
+                        existing.getOrderId(),
+                        existing.getSuccess(),
+                        existing.getTransactionId(),
+                        "Payment already processed for this order");
             }
 
             // Simulate payment processing
@@ -99,40 +95,36 @@ public class PaymentService {
 
             // Save payment record
             PaymentRecord paymentRecord = createPaymentRecord(
-                request.getOrderId(), 
-                success, 
-                transactionId, 
-                "CARD"
-            );
+                    request.getOrderId(),
+                    success,
+                    transactionId,
+                    "CARD");
 
             // Publish PaymentResultEvent
             publishPaymentResult(
-                request.getOrderId(), 
-                request.getUserId(),
-                success, 
-                transactionId, 
-                message
-            );
+                    request.getOrderId(),
+                    request.getUserId(),
+                    success,
+                    transactionId,
+                    message);
 
             logger.info("Manual payment processed for order {}: success={}", request.getOrderId(), success);
-            
+
             return new PaymentResponse(
-                request.getOrderId(),
-                success,
-                transactionId,
-                message
-            );
-            
+                    request.getOrderId(),
+                    success,
+                    transactionId,
+                    message);
+
         } catch (Exception e) {
-            logger.error("Error in manual payment processing for order {}: {}", 
-                request.getOrderId(), e.getMessage(), e);
-                
+            logger.error("Error in manual payment processing for order {}: {}",
+                    request.getOrderId(), e.getMessage(), e);
+
             return new PaymentResponse(
-                request.getOrderId(),
-                false,
-                null,
-                "Payment processing error: " + e.getMessage()
-            );
+                    request.getOrderId(),
+                    false,
+                    null,
+                    "Payment processing error: " + e.getMessage());
         }
     }
 
@@ -149,19 +141,19 @@ public class PaymentService {
     private boolean simulatePaymentGateway() {
         // Simulate processing delay
         try {
-            Thread.sleep(ThreadLocalRandom.current().nextInt(500, 1500));
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
+
         return ThreadLocalRandom.current().nextInt(100) < 90;
     }
 
     /**
      * Create and save payment record
      */
-    private PaymentRecord createPaymentRecord(Long orderId, boolean success, 
-                                             String transactionId, String method) {
+    private PaymentRecord createPaymentRecord(Long orderId, boolean success,
+            String transactionId, String method) {
         PaymentRecord paymentRecord = new PaymentRecord();
         paymentRecord.setOrderId(orderId);
         paymentRecord.setSuccess(success);
@@ -173,8 +165,8 @@ public class PaymentService {
     /**
      * Publish payment result event to RabbitMQ
      */
-    private void publishPaymentResult(Long orderId, Long userId, boolean success, 
-                                     String transactionId, String reason) {
+    private void publishPaymentResult(Long orderId, Long userId, boolean success,
+            String transactionId, String reason) {
         PaymentResultEvent resultEvent = new PaymentResultEvent();
         resultEvent.setOrderId(orderId);
         resultEvent.setUserId(userId);
@@ -186,4 +178,3 @@ public class PaymentService {
         logger.info("Published payment result event for order {}: success={}", orderId, success);
     }
 }
-

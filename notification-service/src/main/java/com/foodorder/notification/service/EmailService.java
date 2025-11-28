@@ -16,27 +16,42 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendOrderConfirmationEmail(String toEmail, Long orderId, String transactionId) {
+    public void sendOrderConfirmationEmail(String toEmail, com.foodorder.notification.dto.OrderDTO order,
+            String transactionId) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("soumikroychoudhury02@gmail.com");
             message.setTo(toEmail);
-            message.setSubject("✅ Order Confirmed - Order #" + orderId);
+            message.setSubject("✅ Order Confirmed - Order #" + order.getId());
+
+            StringBuilder itemsList = new StringBuilder();
+            for (com.foodorder.notification.dto.OrderItemDTO item : order.getItems()) {
+                itemsList.append(String.format("- Menu Item #%d (x%d): $%.2f\n",
+                        item.getMenuItemId(), item.getQuantity(), item.getPrice()));
+            }
+
             message.setText(String.format(
                     "Dear Customer,\n\n" +
                             "Great news! Your order has been confirmed.\n\n" +
+                            "Order Details:\n" +
+                            "--------------------------------------------------\n" +
                             "Order ID: %d\n" +
+                            "Date: %s\n" +
                             "Transaction ID: %s\n" +
                             "Status: CONFIRMED\n\n" +
+                            "Items:\n" +
+                            "%s\n" +
+                            "Total Amount: $%.2f\n" +
+                            "--------------------------------------------------\n\n" +
                             "Thank you for your order!\n\n" +
                             "Best regards,\n" +
                             "Food Ordering Service Team",
-                    orderId, transactionId));
+                    order.getId(), order.getCreatedAt(), transactionId, itemsList.toString(), order.getAmount()));
 
             mailSender.send(message);
-            logger.info("✅ Confirmation email sent to {} for order {}", toEmail, orderId);
+            logger.info("✅ Confirmation email sent to {} for order {}", toEmail, order.getId());
         } catch (Exception e) {
-            logger.error("❌ Failed to send confirmation email for order {}: {}", orderId, e.getMessage());
+            logger.error("❌ Failed to send confirmation email for order {}: {}", order.getId(), e.getMessage());
         }
     }
 
