@@ -7,6 +7,9 @@ import com.foodorder.order.util.SecurityUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
@@ -14,6 +17,15 @@ public class OrderController {
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("service", "order-service");
+        health.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(health);
     }
 
     @PostMapping

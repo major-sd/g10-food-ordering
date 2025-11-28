@@ -145,6 +145,7 @@ services:
     container_name: restaurant-service
     ports:
       - "8082:8082"
+      - "5005:5005"
     depends_on:
       mysql_restaurant:
         condition: service_healthy
@@ -156,7 +157,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql_restaurant:3306/restaurant_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: password
-
+      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
   order-service:
     build:
       context: ./order-service

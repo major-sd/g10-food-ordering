@@ -48,8 +48,26 @@ public class RestaurantService {
 
     public MenuItemDTO getMenuItem(Long menuItemId) {
         MenuItem menuItem = menuItemRepository.findById(menuItemId)
-                .orElseThrow(() -> new RuntimeException("MenuItem not found"));
+                .orElseThrow(() -> new RuntimeException("No menu item exists with id: " + menuItemId));
         return toDTO(menuItem);
+    }
+
+    public List<MenuItemDTO> getRestaurantMenu(Long restaurantId) {
+        // First verify restaurant exists - throw exception with clear message if not
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("No restaurant exists with id: " + restaurantId));
+        
+        // Get all menu items for this restaurant (can be empty list)
+        return menuItemRepository.findByRestaurantId(restaurantId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<MenuItemDTO> getAllMenuItems() {
+        // Get all menu items across all restaurants
+        return menuItemRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     private RestaurantDTO toDTO(Restaurant restaurant) {
