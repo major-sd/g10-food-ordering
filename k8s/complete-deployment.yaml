@@ -1,0 +1,634 @@
+# -----------------------
+# Namespace
+# -----------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: food-ordering
+---
+# -----------------------
+# App Config
+# -----------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: food-ordering
+data:
+  SPRING_PROFILES_ACTIVE: "k8s"
+  JWT_SECRET: "secret"
+  JWT_EXPIRATION: "86400000"
+---
+# -----------------------
+# DB passwords
+# -----------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-passwords
+  namespace: food-ordering
+data:
+  AUTH_DB_PASSWORD: "root"
+  ORDER_DB_PASSWORD: "root"
+  RESTAURANT_DB_PASSWORD: "root"
+  PAYMENT_DB_PASSWORD: "root"
+  NOTIFICATION_DB_PASSWORD: "root"
+---
+# -----------------------
+# RabbitMQ config
+# -----------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: food-ordering
+data:
+  USER: "admin"
+  PASS: "admin"
+---
+# -----------------------
+# MySQL Deployments and Services (all use 3306)
+# -----------------------
+# Auth DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-auth
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: mysql-auth
+  template:
+    metadata:
+      labels:
+        app: mysql-auth
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: AUTH_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          value: auth_db
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-auth-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-auth-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth
+  namespace: food-ordering
+spec:
+  selector:
+    app: mysql-auth
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+# Order DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-order
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: mysql-order
+  template:
+    metadata:
+      labels:
+        app: mysql-order
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: ORDER_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          value: order_db
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-order-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-order-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order
+  namespace: food-ordering
+spec:
+  selector:
+    app: mysql-order
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+# Restaurant DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-restaurant
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: mysql-restaurant
+  template:
+    metadata:
+      labels:
+        app: mysql-restaurant
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: RESTAURANT_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          value: restaurant_db
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-restaurant-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-restaurant-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-restaurant
+  namespace: food-ordering
+spec:
+  selector:
+    app: mysql-restaurant
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+# Payment DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-payment
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: mysql-payment
+  template:
+    metadata:
+      labels:
+        app: mysql-payment
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: PAYMENT_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          value: payment_db
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-payment-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-payment-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-payment
+  namespace: food-ordering
+spec:
+  selector:
+    app: mysql-payment
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+# Notification DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-notification
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: mysql-notification
+  template:
+    metadata:
+      labels:
+        app: mysql-notification
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: NOTIFICATION_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          value: notification_db
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-notification-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-notification-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-notification
+  namespace: food-ordering
+spec:
+  selector:
+    app: mysql-notification
+  ports:
+  - port: 3306
+    targetPort: 3306
+---
+# -----------------------
+# RabbitMQ
+# -----------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.12-management
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            configMapKeyRef:
+              name: rabbitmq-config
+              key: USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            configMapKeyRef:
+              name: rabbitmq-config
+              key: PASS
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: food-ordering
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+  - name: management
+    port: 15672
+    targetPort: 15672
+---
+# -----------------------
+# API Gateway
+# -----------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: g10-food-ordering-api-gateway:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: food-ordering
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 8080
+  type: LoadBalancer
+---
+# -----------------------
+# All Microservices (auth, order, restaurant, payment, notification)
+# -----------------------
+# Auth Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: g10-food-ordering-auth-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql-auth:3306/auth_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: AUTH_DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: food-ordering
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+# Order Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: g10-food-ordering-order-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql-order:3306/order_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: ORDER_DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: food-ordering
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+# Restaurant Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-service
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: restaurant-service
+  template:
+    metadata:
+      labels:
+        app: restaurant-service
+    spec:
+      containers:
+      - name: restaurant-service
+        image: g10-food-ordering-restaurant-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql-restaurant:3306/restaurant_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: RESTAURANT_DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restaurant-service
+  namespace: food-ordering
+spec:
+  selector:
+    app: restaurant-service
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+# Payment Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: g10-food-ordering-payment-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql-payment:3306/payment_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: PAYMENT_DB_PASSWORD
+        - name: SPRING_RABBITMQ_HOST
+          value: rabbitmq
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: food-ordering
+spec:
+  selector:
+    app: payment-service
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+# Notification Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: food-ordering
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: g10-food-ordering-notification-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql-notification:3306/notification_db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: db-passwords
+              key: NOTIFICATION_DB_PASSWORD
+        - name: SPRING_RABBITMQ_HOST
+          value: rabbitmq
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: food-ordering
+spec:
+  selector:
+    app: notification-service
+  ports:
+  - port: 8080
+    targetPort: 8080
